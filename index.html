@@ -1,61 +1,224 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#15803d">
-<title>El Puestito · Mayorista y Minorista</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#1347b8">
+
+  <title>El Puestito | Catálogo</title>
+  <meta name="description" content="Catálogo de El Puestito: productos de limpieza, higiene, almacén y artículos para el hogar. Armá tu pedido y envialo por WhatsApp.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="El Puestito | Catálogo">
+  <meta property="og:description" content="Productos de limpieza, higiene y mucho más. Armá tu pedido y envialo por WhatsApp.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🏪%3C/text%3E%3C/svg%3E">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Datos estructurados básicos (solo el nombre; agregá dirección/teléfono cuando quieras) -->
+  <script type="application/ld+json">
+  { "@context": "https://schema.org", "@type": "Store", "name": "El Puestito" }
+  </script>
 </head>
+
 <body>
-<div class="strip">🚚 Pedidos por WhatsApp · 💳 Transferencias · 📍 Nos encontrás en la feria</div>
+  <a class="saltar" href="#catalogo">Saltar al catálogo</a>
 
-<header class="top">
-  <div class="row">
-    <div class="brand">🏪 El Puestito</div>
-    <button class="cart-btn" id="open-cart" aria-label="Ver carrito">🛒<span id="badge" hidden>0</span></button>
+  <!-- ===================== ENCABEZADO ===================== -->
+  <header class="encabezado">
+    <div class="contenedor encabezado-fila">
+      <a class="marca" href="#inicio" aria-label="El Puestito, ir al inicio">
+        <span class="marca-logo" aria-hidden="true">EP</span>
+        <span class="marca-texto">
+          <strong>El Puestito</strong>
+          <small>Todo para tu hogar</small> <!-- EDITAR: tu slogan -->
+        </span>
+      </a>
+
+      <button type="button" class="btn btn-primario btn-carrito" id="btn-carrito" aria-label="Abrir carrito">
+        <span aria-hidden="true">🛒</span>
+        <span class="btn-carrito-texto">Carrito</span>
+        <span class="contador" id="contador-carrito" hidden>0</span>
+      </button>
+    </div>
+  </header>
+
+  <main id="inicio">
+
+    <!-- ===================== HERO ===================== -->
+    <section class="hero" aria-labelledby="hero-titulo">
+      <div class="contenedor">
+        <h1 id="hero-titulo">Todo lo que necesitás para tu hogar</h1>
+        <p class="hero-texto">Productos de limpieza, higiene y mucho más.</p>
+        <div class="hero-acciones">
+          <a class="btn btn-claro" href="#catalogo">Ver productos</a>
+          <a class="btn btn-borde" href="#" data-whatsapp>Escribinos por WhatsApp</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- EDITAR: estos 4 beneficios son textos de ejemplo. Cambialos o borralos a tu gusto. -->
+    <section class="beneficios contenedor" aria-label="Beneficios">
+      <div class="beneficio">
+        <span class="beneficio-icono" aria-hidden="true">💬</span>
+        <strong>Pedidos por WhatsApp</strong>
+        <span>Armá tu pedido y envialo en un toque.</span>
+      </div>
+      <div class="beneficio">
+        <span class="beneficio-icono" aria-hidden="true">🔥</span>
+        <strong>Promociones</strong>
+        <span>Mirá las ofertas vigentes.</span>
+      </div>
+      <div class="beneficio">
+        <span class="beneficio-icono" aria-hidden="true">🚚</span>
+        <strong>Envíos</strong>
+        <span>Consultanos por envíos.</span>
+      </div>
+      <div class="beneficio">
+        <span class="beneficio-icono" aria-hidden="true">🙋</span>
+        <strong>Atención personalizada</strong>
+        <span>Te respondemos por WhatsApp.</span>
+      </div>
+    </section>
+
+    <!-- ===================== DESTACADOS (se llena solo desde script.js) ===================== -->
+    <section class="seccion" id="destacados" aria-labelledby="destacados-titulo" hidden>
+      <div class="contenedor">
+        <h2 id="destacados-titulo">⭐ Productos destacados</h2>
+        <div class="carril" id="contenedor-destacados"></div>
+      </div>
+    </section>
+
+    <!-- ===================== PROMOCIONES (se llena solo desde script.js) ===================== -->
+    <section class="seccion seccion-promo" id="promociones" aria-labelledby="promociones-titulo" hidden>
+      <div class="contenedor">
+        <h2 id="promociones-titulo">🔥 Promociones</h2>
+        <div class="carril" id="contenedor-promociones"></div>
+      </div>
+    </section>
+
+    <!-- ===================== CATÁLOGO ===================== -->
+    <section class="seccion" id="catalogo" aria-labelledby="catalogo-titulo">
+      <div class="contenedor">
+        <h2 id="catalogo-titulo">Catálogo</h2>
+
+        <div class="herramientas">
+          <div class="buscador">
+            <label class="solo-lector" for="buscador">Buscar productos por nombre</label>
+            <input id="buscador" type="search" placeholder="🔎 ¿Qué estás buscando?" autocomplete="off" enterkeyhint="search">
+          </div>
+          <nav class="categorias" id="categorias" aria-label="Categorías"></nav>
+        </div>
+
+        <p class="resultados" id="contador-productos" aria-live="polite"></p>
+        <div class="grilla" id="contenedor-productos">
+          <noscript><p class="vacio">Para ver el catálogo necesitás activar JavaScript.</p></noscript>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===================== FOOTER ===================== -->
+  <footer class="pie">
+    <div class="contenedor pie-grilla">
+      <div>
+        <strong class="pie-marca">El Puestito</strong>
+        <p>Todo para tu hogar</p>
+        <p>📍 Nos encontrás en la feria</p>
+      </div>
+      <div>
+        <h3>Contacto</h3>
+        <p><a href="#" data-whatsapp>Escribinos por WhatsApp</a></p>
+        <p>Teléfono / email: <span class="pendiente">[AGREGAR]</span></p>
+      </div>
+      <div>
+        <h3>Redes sociales</h3>
+        <p>Instagram: <span class="pendiente">[AGREGAR ENLACE]</span></p>
+        <p>Facebook: <span class="pendiente">[AGREGAR ENLACE]</span></p>
+      </div>
+      <div>
+        <h3>Horarios</h3>
+        <p><span class="pendiente">[AGREGAR HORARIOS]</span></p>
+      </div>
+    </div>
+    <div class="contenedor pie-base">
+      <small>© <span id="anio">2026</span> El Puestito. Todos los derechos reservados.</small>
+      <button type="button" class="btn-admin" id="btn-admin" aria-label="Abrir panel de administración" title="Administración">⚙️</button>
+    </div>
+  </footer>
+
+  <!-- ===================== BARRA DE CARRITO (solo celular) ===================== -->
+  <div class="barra-carrito" id="barra-carrito" hidden>
+    <button type="button" id="barra-btn">
+      <span class="barra-cantidad" id="barra-cantidad">0</span>
+      <strong>Ver carrito</strong>
+      <span id="barra-total">$0</span>
+    </button>
   </div>
-  <input id="q" type="search" placeholder="🔍 Buscar productos..." autocomplete="off">
-  <nav class="chips" id="chips"></nav>
-</header>
 
-<main>
-  <section class="hero">
-    <h1>Todo para tu hogar<br>al mejor precio</h1>
-    <p>Mayorista y minorista · Limpieza, higiene, papeles y almacén</p>
-    <a class="btn" href="#productos">Ver productos</a>
-  </section>
+  <!-- ===================== CARRITO ===================== -->
+  <div class="fondo" id="fondo"></div>
+  <aside class="panel-carrito" id="panel-carrito" data-capa aria-hidden="true" aria-labelledby="carrito-titulo">
+    <div class="panel-cab">
+      <h2 id="carrito-titulo">🛒 Carrito</h2>
+      <button type="button" class="cerrar" data-accion="cerrar" data-foco aria-label="Cerrar carrito">✕</button>
+    </div>
+    <div class="panel-cuerpo" id="contenido-carrito"></div>
+    <div class="panel-pie" id="footer-carrito"></div>
+  </aside>
 
-  <section>
-    <h2>🔥 Ofertas de la semana</h2>
-    <div class="offers" id="offers"></div>
-  </section>
+  <!-- ===================== MODAL DE PRODUCTO ===================== -->
+  <div class="modal" id="modal-producto" data-capa role="dialog" aria-modal="true" aria-labelledby="modal-titulo" aria-hidden="true">
+    <div class="modal-caja">
+      <button type="button" class="cerrar" data-accion="cerrar" data-foco aria-label="Cerrar detalle del producto">✕</button>
+      <div class="modal-scroll" id="modal-cuerpo"></div>
+    </div>
+  </div>
 
-  <section id="productos">
-    <div class="head"><h2>Nuestros productos</h2><span id="count"></span></div>
-    <div class="grid" id="grid"></div>
-  </section>
-</main>
+  <!-- ===================== PANEL DE ADMINISTRACIÓN ===================== -->
+  <div class="modal" id="admin-modal" data-capa role="dialog" aria-modal="true" aria-labelledby="admin-titulo" aria-hidden="true">
+    <div class="modal-caja modal-admin">
+      <button type="button" class="cerrar" data-accion="cerrar" data-foco aria-label="Cerrar panel de administración">✕</button>
+      <div class="modal-scroll">
+        <h2 id="admin-titulo">Panel de administración</h2>
+        <p class="nota">Estos números se calculan solos a partir de la lista de productos de <code>script.js</code>.</p>
 
-<footer>
-  <b>El Puestito</b>
-  <p>📍 Nos encontrás en la feria</p>
-  <p>📲 Pedidos por WhatsApp · 💳 Aceptamos transferencias</p>
-  <small>© 2026 El Puestito</small>
-</footer>
+        <div class="estadisticas">
+          <div class="estadistica"><strong id="total-productos">0</strong><span>Productos</span></div>
+          <div class="estadistica"><strong id="total-destacados">0</strong><span>Destacados</span></div>
+          <div class="estadistica"><strong id="total-promos">0</strong><span>Promociones</span></div>
+          <div class="estadistica"><strong id="total-agotados">0</strong><span>Agotados</span></div>
+        </div>
 
-<div class="bar" id="bar" hidden>
-  <button id="bar-btn"><span id="bar-n"></span><b>Ver carrito</b><span id="bar-t"></span></button>
-</div>
+        <h3>Calculadora de inventario</h3>
+        <p class="nota">Ejemplo: llevé 50 unidades y vendí 38.</p>
+        <div class="inventario-campos">
+          <label>Llevé
+            <input type="number" id="inv-llevadas" min="0" inputmode="numeric" placeholder="50">
+          </label>
+          <label>Vendí
+            <input type="number" id="inv-vendidas" min="0" inputmode="numeric" placeholder="38">
+          </label>
+        </div>
+        <div class="estadisticas estadisticas-3">
+          <div class="estadistica"><strong id="inv-res-vendidas">–</strong><span>Vendidas</span></div>
+          <div class="estadistica"><strong id="inv-res-restantes">–</strong><span>Restantes</span></div>
+          <div class="estadistica"><strong id="inv-res-porcentaje">–</strong><span>Vendido</span></div>
+        </div>
+        <div class="progreso" aria-hidden="true"><div class="progreso-barra" id="inv-barra"></div></div>
+        <p class="nota" id="inv-mensaje" role="status"></p>
 
-<div class="back" id="back"></div>
-<aside class="sheet" id="sheet" aria-label="Carrito">
-  <div class="sheet-h"><h2>🛒 Mi pedido</h2><button id="close-cart" aria-label="Cerrar">✕</button></div>
-  <div class="sheet-b" id="items"></div>
-  <div class="sheet-f" id="foot"></div>
-</aside>
+        <p class="nota">Para agregar o editar productos, modificá la lista <code>productos</code> en <code>script.js</code>.</p>
+      </div>
+    </div>
+  </div>
 
-<div class="toast" id="toast"></div>
-<script src="script.js"></script>
+  <!-- ===================== NOTIFICACIONES ===================== -->
+  <div class="notificaciones" id="notificaciones" role="status" aria-live="polite"></div>
+
+  <script src="script.js"></script>
 </body>
 </html>
