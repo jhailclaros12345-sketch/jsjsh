@@ -387,6 +387,7 @@ function limpiarFiltros() {
 }
 
 
+
 /* =====================================================
    6. CATEGORÍAS
    ===================================================== */
@@ -403,4 +404,603 @@ function listaCategorias() {
     }
   });
   const promo = CATEGORIAS.find(function (c) { return c.id === "promociones"; });
-  const resto = CATEGORIAS.filter(function (c) { return c.id !== "promocio
+  const resto = CATEGORIAS.filter(function (c) { return c.id !== "promociones"; });
+  return resto.concat(extras, promo ? [promo] : []);
+}
+
+function nombreCategoria(id) {
+  const clave = normalizarTexto(id);
+  const c = categoriasActivas.find(function (x) { return x.id === clave; });
+  return c ? c.nombre : capitalizar(id || "Sin categoría");
+}
+
+function productoEnCategoria(p, categoria) {
+  if (categoria === "todos") return true;
+  if (categoria === "promociones") return esPromo(p);
+  return normalizarTexto(p.categoria) === categoria;
+}
+
+// Íconos de cada categoría (mosaicos del menú). Para una categoría nueva, sumá una línea.
+const ICONOS_CATEGORIA = { todos: "🛍️", limpieza: "🧴", higiene: "🧼", almacen: "🥫", papeles: "🧻", promociones: "🔥" };
+
+// Dibuja los botones de categorías (una sola vez al iniciar).
+function mostrarCategorias() {
+  const nav = obtenerEl("categorias");
+  if (!nav) return;
+  nav.innerHTML = categoriasActivas.map(function (c) {
+    const activa = c.id === estado.categoria;
+    return '<button type="button" class="chip' + (c.id === "promociones" ? " chip-promo" : "") + (activa ? " activa" : "") +
+      '" data-categoria="' + escaparHTML(c.id) + '" aria-pressed="' + activa + '">' +
+      '<i aria-hidden="true">' + (ICONOS_CATEGORIA[c.id] || "📦") + "</i>" + escaparHTML(c.nombre) + "</button>";
+  }).join("");
+}
+
+// Filtra por categoría y marca visualmente el botón activo.
+function filtrarCategoria(categoria) {
+  estado.categoria = normalizarTexto(categoria) || "todos";
+  document.querySelectorAll("#categorias .chip").forEach(function (boton) {
+    const activa = boton.dataset.categoria === estado.categoria;
+    boton.classList.toggle("activa", activa);
+    boton.setAttribute("aria-pressed", String(activa));
+    if (activa && boton.scrollIntoView) boton.scrollIntoView({ inline: "center", block: "nearest" });
+  });
+  mostrarProductos(undefined, true);
+}
+
+
+/* =====================================================
+   7. CAPAS: abrir y cerrar paneles (carrito, modal, admin)
+   -----------------------------------------------------
+   Todas usan la clase "abierto" + CSS (visibility/opacity/transform).
+   No se mezcla display:none con opacity, así nada queda invisible por error.
+   ===================================================== */
+const capasAbiertas = [];
+let focoPrevio = null;
+
+function abrirCapa(el) {
+  if (!el || el.classList.contains("abierto")) return;
+  if (capasAbiertas.length === 0) focoPrevio = document.activeElement;
+  capasAbiertas.push(el);
+  el.classList.add("abierto");
+  el.setAttribute("aria-hidden", "false");
+  document.body.classList.add("sin-scroll");
+  const foco = el.querySelector("[data-foco]");
+  if (foco) foco.focus({ preventScroll: true });
+}
+
+function cerrarCapa(el) {
+  if (!el) return;
+  const i = capasAbiertas.indexOf(el);
+  if (i === -1) return;
+  capasAbiertas.splice(i, 1);
+  el.classList.remove("abierto");
+  el.setAttribute("aria-hidden", "true");
+  if (capasAbiertas.length === 0) {
+    document.body.classList.remove("sin-scroll");
+    if (focoPrevio && focoPrevio.focus) focoPrevio.focus({ preventScroll: true });
+    focoPrevio = null;
+  }
+}
+
+// Cierra la capa que esté más arriba (lo usa la tecla ESC).
+function cerrarCapaSuperior() {
+  const cierres = { "modal-producto": cerrarModal, "admin-modal": cerrarAdmin, "panel-carrito": cerrarCarrito };
+  const el = capasAbiertas[capasAbiertas.length - 1];
+  if (el && cierres[el.id]) cierres[el.id]();
+}
+
+
+/* =====================================================
+   8. MODAL DE PRODUCTO
+   ===================================================== */
+
+function crearDetalleHTML(p) {
+  const precios = obtenerPrecios(p);
+  const stockEstado = estadoStock(p);
+  const comprable = sePuedeComprar(p);
+  const nombre = escaparHTML(p.nombre);
+  const cantidadStock = obtenerCantidadStock(p);
+
+  const precioHTML = esPrecioValido(precios.actual)
+    ? '<span class="precio-actual">' + formatearPrecio(precios.actual) + "</span>" +
+      (precios.anterior ? '<s class="precio-anterior">' + formatearPrecio(precios.anterior) + "</s>" : "")
+    : '<span class="precio-consultar">Consultar precio</span>';
+
+  let etiquetas = "";
+  if (esPromo(p)) etiquetas += '<span class="etiqueta etiqueta-promo">' + escaparHTML(textoPromo(p)) + "</span>";
+  if (precios.descuento > 0) etiquetas += '<span class="etiqueta etiqueta-descuento">-' + precios.descuento + "%</span>";
+  if (p.destacado) etiquetas += '<span class="etiqueta etiqueta-destacado">⭐ Destacado</span>';
+
+  const stockTexto = ETIQUETAS_STOCK[stockEstado] +
+    (cantidadStock !== null && cantidadStock > 0 ? " (" + cantidadStock + " en stock)" : "");
+  const descripcion = p.descripcion && String(p.descripcion).trim()
+    ? escaparHTML(p.descripcion) : "Este producto todavía no tiene descripción.";
+
+  const acciones = comprable
+    ? '<div class="fila-cantidad"><span id="modal-cantidad-etiqueta">Cantidad</span>' +
+        '<div class="cantidad" role="group" aria-labelledby="modal-cantidad-etiqueta">' +
+          '<button type="button" data-accion="menos" aria-label="Quitar una unidad">−</button>' +
+          '<output id="modal-cantidad" aria-live="polite">1</output>' +
+          '<button type="button" data-accion="mas" aria-label="Sumar una unidad">+</button>' +
+        "</div></div>" +
+      '<button type="button" class="btn btn-primario btn-block" data-accion="agregar">🛒 Agregar al carrito</button>' +
+      '<button type="button" class="btn btn-secundario btn-block" data-accion="whatsapp">📲 Consultar este producto por WhatsApp</button>'
+    : '<button type="button" class="btn btn-primario btn-block" disabled>' +
+        (stockEstado === "agotado" ? "Agotado" : "Sin precio") + "</button>" +
+      '<button type="button" class="btn btn-secundario btn-block" data-accion="whatsapp">📲 Consultar por WhatsApp</button>';
+
+  return '<div class="detalle">' +
+    '<div class="detalle-imagen"><img src="' + escaparHTML(p.imagen || IMAGEN_RESPALDO) + '" alt="' + nombre + '"></div>' +
+    '<div class="detalle-info">' +
+      '<div class="detalle-meta"><span class="detalle-categoria">' + escaparHTML(nombreCategoria(p.categoria)) + "</span>" + etiquetas + "</div>" +
+      '<h2 id="modal-titulo">' + nombre + "</h2>" +
+      '<div class="precio-bloque">' + precioHTML + "</div>" +
+      '<span class="stock stock-' + stockEstado + '">' + escaparHTML(stockTexto) + "</span>" +
+      '<p class="detalle-descripcion">' + descripcion + "</p>" +
+      '<div class="detalle-acciones">' + acciones + "</div>" +
+    "</div>" +
+  "</div>";
+}
+
+// Abre el modal con la información del producto indicado.
+function abrirModal(id) {
+  const p = obtenerProducto(id);
+  const modal = obtenerEl("modal-producto");
+  const cuerpo = obtenerEl("modal-cuerpo");
+  if (!p) { mostrarNotificacion("⚠️ Ese producto ya no está disponible"); return; }
+  if (!modal || !cuerpo) return;
+  productoModalId = p.id;
+  cantidadModal = 1;
+  cuerpo.innerHTML = crearDetalleHTML(p);
+  cuerpo.scrollTop = 0;
+  abrirCapa(modal);
+}
+
+function cerrarModal() {
+  cerrarCapa(obtenerEl("modal-producto"));
+  productoModalId = null;
+}
+
+// Botones − y + del modal.
+function cambiarCantidadModal(delta) {
+  const p = obtenerProducto(productoModalId);
+  if (!p) return;
+  const maximo = Math.min(maximoComprable(p), 99);
+  cantidadModal = Math.min(maximo, Math.max(1, cantidadModal + delta));
+  const salida = obtenerEl("modal-cantidad");
+  if (salida) salida.textContent = cantidadModal;
+}
+
+
+/* =====================================================
+   9. CARRITO
+   ===================================================== */
+
+function contarProductos() {
+  return carrito.reduce(function (suma, i) { return suma + i.cantidad; }, 0);
+}
+function calcularTotal() {
+  return carrito.reduce(function (suma, i) { return suma + i.precio * i.cantidad; }, 0);
+}
+
+// Agrega un producto (o varias unidades). Devuelve true si se agregó algo.
+// Siempre avisa con mostrarNotificacion() y siempre pasa por actualizarCarrito() (que guarda).
+function agregarAlCarrito(id, cantidad) {
+  const p = obtenerProducto(id);
+  if (!p) {
+    console.warn("agregarAlCarrito: producto inexistente", id);
+    mostrarNotificacion("⚠️ Ese producto ya no está disponible");
+    return false;
+  }
+  if (!sePuedeComprar(p)) {
+    mostrarNotificacion(estadoStock(p) === "agotado" ? "Producto agotado" : "Este producto no tiene precio cargado");
+    return false;
+  }
+
+  cantidad = Math.max(1, Math.floor(Number(cantidad)) || 1);
+  const item = carrito.find(function (i) { return i.id === p.id; });
+  const enCarrito = item ? item.cantidad : 0;
+  const posible = Math.min(cantidad, maximoComprable(p) - enCarrito);
+
+  if (posible <= 0) {
+    mostrarNotificacion("Ya tenés todo el stock disponible en el carrito");
+    return false;
+  }
+
+  if (item) {
+    item.cantidad += posible;
+  } else {
+    carrito.push({ id: p.id, nombre: p.nombre, precio: obtenerPrecios(p).actual, cantidad: posible });
+  }
+
+  actualizarCarrito();
+  mostrarNotificacion(posible < cantidad
+    ? "✓ Agregamos " + posible + " (máximo disponible)"
+    : "✓ Producto agregado al carrito");
+  animarBotonCarrito();
+  return true;
+}
+
+// Suma o resta unidades de un producto del carrito. Si llega a 0, lo elimina.
+function cambiarCantidad(id, cambio) {
+  const item = carrito.find(function (i) { return i.id === id; });
+  if (!item) return;
+  const nueva = item.cantidad + cambio;
+  if (nueva <= 0) { eliminarProducto(id); return; }
+  const p = obtenerProducto(id);
+  if (p && nueva > maximoComprable(p)) { mostrarNotificacion("Llegaste al stock máximo disponible"); return; }
+  item.cantidad = nueva;
+  actualizarCarrito();
+}
+
+function eliminarProducto(id) {
+  const antes = carrito.length;
+  carrito = carrito.filter(function (i) { return i.id !== id; });
+  if (carrito.length !== antes) {
+    actualizarCarrito();
+    mostrarNotificacion("🗑 Producto eliminado del carrito");
+  }
+}
+
+function vaciarCarrito() {
+  if (carrito.length === 0) return;
+  if (!window.confirm("¿Querés vaciar todo el carrito?")) return;
+  carrito = [];
+  actualizarCarrito();
+}
+
+// Función central: redibuja el carrito, actualiza contadores y total, y guarda en localStorage.
+// Todo cambio del carrito termina acá, por eso nunca hay inconsistencias.
+function actualizarCarrito() {
+  const contenido = obtenerEl("contenido-carrito");
+  const pie = obtenerEl("footer-carrito");
+  const cantidadTotal = contarProductos();
+  const total = calcularTotal();
+
+  // Contadores (botón del header y barra inferior del celular)
+  const contador = obtenerEl("contador-carrito");
+  if (contador) { contador.textContent = cantidadTotal; contador.hidden = cantidadTotal === 0; }
+  const barra = obtenerEl("barra-carrito");
+  if (barra) barra.hidden = cantidadTotal === 0;
+  const barraCantidad = obtenerEl("barra-cantidad");
+  if (barraCantidad) barraCantidad.textContent = cantidadTotal;
+  const barraTotal = obtenerEl("barra-total");
+  if (barraTotal) barraTotal.textContent = formatearPrecio(total);
+
+  if (contenido) {
+    if (carrito.length === 0) {
+      contenido.innerHTML = '<div class="carrito-vacio"><span aria-hidden="true">🛒</span><strong>Tu carrito está vacío</strong>' +
+        "<p>Agregá productos desde el catálogo.</p></div>";
+    } else {
+      contenido.innerHTML = carrito.map(function (item) {
+        const p = obtenerProducto(item.id);
+        const nombre = escaparHTML(item.nombre);
+        const imagen = escaparHTML((p && p.imagen) || IMAGEN_RESPALDO);
+        return '<article class="item-carrito" data-id="' + escaparHTML(item.id) + '">' +
+          '<div class="item-imagen"><img src="' + imagen + '" alt="' + nombre + '" loading="lazy"></div>' +
+          '<div class="item-info"><h3>' + nombre + '</h3><p class="item-unitario">' + formatearPrecio(item.precio) + " c/u</p></div>" +
+          '<div class="item-fila" style="grid-column:1 / -1">' +
+            '<div class="cantidad" role="group" aria-label="Cantidad de ' + nombre + '">' +
+              '<button type="button" data-accion="menos" aria-label="Quitar una unidad de ' + nombre + '">−</button>' +
+              "<output>" + item.cantidad + "</output>" +
+              '<button type="button" data-accion="mas" aria-label="Sumar una unidad de ' + nombre + '">+</button>' +
+            "</div>" +
+            '<strong class="item-subtotal">' + formatearPrecio(item.precio * item.cantidad) + "</strong>" +
+            '<button type="button" class="item-eliminar" data-accion="eliminar" aria-label="Eliminar ' + nombre + ' del carrito">🗑</button>' +
+          "</div></article>";
+      }).join("");
+    }
+  }
+
+  if (pie) {
+    pie.innerHTML = carrito.length === 0 ? "" :
+      '<div class="resumen"><span>Productos</span><strong>' + cantidadTotal + "</strong></div>" +
+      '<div class="resumen resumen-total"><span>Total</span><strong>' + formatearPrecio(total) + "</strong></div>" +
+      '<button type="button" class="btn btn-whatsapp btn-block" data-accion="finalizar">📲 Finalizar pedido por WhatsApp</button>' +
+      '<div class="pie-acciones"><button type="button" class="btn btn-secundario" data-accion="seguir">Seguir comprando</button>' +
+      '<button type="button" class="btn btn-texto" data-accion="vaciar">Vaciar carrito</button></div>';
+  }
+
+  guardarCarrito();
+}
+
+function verCarrito() {
+  const fondo = obtenerEl("fondo");
+  if (fondo) fondo.classList.add("abierto");
+  abrirCapa(obtenerEl("panel-carrito"));
+}
+
+function cerrarCarrito() {
+  const fondo = obtenerEl("fondo");
+  if (fondo) fondo.classList.remove("abierto");
+  cerrarCapa(obtenerEl("panel-carrito"));
+}
+
+// Pequeño "latido" del botón del carrito al agregar algo.
+function animarBotonCarrito() {
+  const boton = obtenerEl("btn-carrito");
+  if (!boton) return;
+  boton.classList.remove("pulso");
+  void boton.offsetWidth;
+  boton.classList.add("pulso");
+}
+
+
+/* =====================================================
+   10. NOTIFICACIONES
+   -----------------------------------------------------
+   Lógica en 3 pasos: MOSTRAR (se crea el aviso) → ANIMAR (clase "visible")
+   → OCULTAR (se saca la clase y, al terminar la animación, se elimina del HTML).
+   Cada aviso es un elemento propio, así varios seguidos conviven sin pisarse.
+   ===================================================== */
+function mostrarNotificacion(mensaje) {
+  const contenedor = obtenerEl("notificaciones");
+  if (!contenedor || !mensaje) return;
+
+  while (contenedor.children.length >= 3) contenedor.firstElementChild.remove();   // máximo 3 a la vez
+
+  // 1) MOSTRAR
+  const aviso = document.createElement("div");
+  aviso.className = "notificacion";
+  aviso.textContent = mensaje;
+  contenedor.appendChild(aviso);
+
+  // 2) ANIMAR (el reflow fuerza al navegador a partir del estado inicial)
+  void aviso.offsetWidth;
+  aviso.classList.add("visible");
+
+  // 3) OCULTAR
+  setTimeout(function () {
+    aviso.classList.remove("visible");
+    const quitar = function () { aviso.remove(); };
+    aviso.addEventListener("transitionend", quitar, { once: true });
+    setTimeout(quitar, 500);   // por si transitionend no se dispara
+  }, DURACION_NOTIFICACION);
+}
+
+
+/* =====================================================
+   11. WHATSAPP
+   ===================================================== */
+
+function numeroWhatsAppValido() {
+  return String(numeroWhatsApp).replace(/\D/g, "").length >= 8;
+}
+
+function urlWhatsApp(texto) {
+  const numero = String(numeroWhatsApp).replace(/\D/g, "");
+  return "https://wa.me/" + numero + (texto ? "?text=" + encodeURIComponent(texto) : "");
+}
+
+function abrirWhatsApp(texto) {
+  const url = urlWhatsApp(texto);
+  const ventana = window.open(url, "_blank");
+  if (!ventana) window.location.href = url;     // si el navegador bloquea la ventana, abre en la misma pestaña
+}
+
+// Arma el texto del pedido: "- Producto x2 — $5.000 ... Total: $8.000"
+function construirMensajePedido() {
+  const lineas = carrito.map(function (i) {
+    return "- " + i.nombre + " x" + i.cantidad + " — " + formatearPrecio(i.precio * i.cantidad);
+  });
+  return "Hola, quiero realizar este pedido:\n\n" + lineas.join("\n") + "\n\nTotal: " + formatearPrecio(calcularTotal());
+}
+
+function finalizarCompra() {
+  if (carrito.length === 0) { mostrarNotificacion("Tu carrito está vacío"); return; }
+  if (!numeroWhatsAppValido()) { mostrarNotificacion("Falta configurar el número de WhatsApp en script.js"); return; }
+  abrirWhatsApp(construirMensajePedido());
+}
+
+// Consulta/pedido de un solo producto (botón del modal).
+function pedirProductoPorWhatsApp(id) {
+  const p = obtenerProducto(id);
+  if (!p) return;
+  if (!numeroWhatsAppValido()) { mostrarNotificacion("Falta configurar el número de WhatsApp en script.js"); return; }
+  abrirWhatsApp("Hola, quiero comprar " + p.nombre);
+}
+
+// Pone el enlace real de WhatsApp en los botones/links marcados con data-whatsapp.
+function configurarEnlacesWhatsApp() {
+  if (!numeroWhatsAppValido()) return;
+  document.querySelectorAll("[data-whatsapp]").forEach(function (a) {
+    a.href = urlWhatsApp("Hola, quiero hacer una consulta.");
+    a.target = "_blank";
+    a.rel = "noopener";
+  });
+}
+
+
+/* =====================================================
+   12. ADMINISTRACIÓN
+   ===================================================== */
+
+// Todas las estadísticas salen de la lista "productos": nada se escribe a mano.
+function calcularEstadisticas() {
+  return {
+    total: productos.length,
+    destacados: productos.filter(function (p) { return Boolean(p.destacado); }).length,
+    promociones: productos.filter(esPromo).length,
+    agotados: productos.filter(function (p) { return estadoStock(p) === "agotado"; }).length
+  };
+}
+
+function asignarTexto(id, valor) {
+  const el = obtenerEl(id);
+  if (el) el.textContent = valor;
+}
+
+function mostrarEstadisticas() {
+  const e = calcularEstadisticas();
+  asignarTexto("total-productos", e.total);
+  asignarTexto("total-destacados", e.destacados);
+  asignarTexto("total-promos", e.promociones);
+  asignarTexto("total-agotados", e.agotados);
+}
+
+// Cálculo de inventario. Ej: calcularInventario(50, 38) → { vendidas: 38, restantes: 12, porcentaje: 76 }
+// Futuro: acá se pueden sumar "devueltas" u otros datos sin tocar el resto del sistema.
+function calcularInventario(llevadas, vendidas) {
+  llevadas = Number(llevadas);
+  vendidas = Number(vendidas);
+  if (!Number.isFinite(llevadas) || !Number.isFinite(vendidas) || llevadas <= 0 || vendidas < 0 || vendidas > llevadas) return null;
+  return {
+    vendidas: vendidas,
+    restantes: llevadas - vendidas,
+    porcentaje: Math.round((vendidas / llevadas) * 100)
+  };
+}
+
+// Lee los dos campos de la calculadora y muestra el resultado.
+function actualizarCalculadoraInventario() {
+  const llevadas = obtenerEl("inv-llevadas");
+  const vendidas = obtenerEl("inv-vendidas");
+  const mensaje = obtenerEl("inv-mensaje");
+  const barra = obtenerEl("inv-barra");
+  if (!llevadas || !vendidas) return;
+
+  const resultado = calcularInventario(llevadas.value, vendidas.value);
+  asignarTexto("inv-res-vendidas", resultado ? resultado.vendidas : "–");
+  asignarTexto("inv-res-restantes", resultado ? resultado.restantes : "–");
+  asignarTexto("inv-res-porcentaje", resultado ? resultado.porcentaje + "%" : "–");
+  if (barra) barra.style.width = resultado ? resultado.porcentaje + "%" : "0";
+
+  if (mensaje) {
+    if (resultado || (llevadas.value === "" && vendidas.value === "")) mensaje.textContent = "";
+    else if (Number(vendidas.value) > Number(llevadas.value)) mensaje.textContent = "Las unidades vendidas no pueden superar a las llevadas.";
+    else mensaje.textContent = "Completá los dos números con valores válidos.";
+  }
+}
+
+function abrirAdmin() {
+  const panel = obtenerEl("admin-modal");
+  if (!panel) { console.warn("abrirAdmin: no existe #admin-modal en el HTML"); return; }
+  mostrarEstadisticas();
+  actualizarCalculadoraInventario();
+  abrirCapa(panel);
+}
+
+function cerrarAdmin() {
+  cerrarCapa(obtenerEl("admin-modal"));
+}
+
+
+/* =====================================================
+   13. EVENTOS E INICIO
+   ===================================================== */
+
+// Clicks dentro de las tarjetas (catálogo, destacados y promociones).
+function manejarClickProductos(e) {
+  const accion = e.target.closest("[data-accion]");
+  if (accion && accion.dataset.accion === "agregar") {
+    e.stopPropagation();                         // el botón NO debe abrir también el modal
+    const tarjeta = accion.closest(".tarjeta");
+    if (tarjeta) agregarAlCarrito(tarjeta.dataset.id, 1);
+    return;
+  }
+  if (accion && accion.dataset.accion === "limpiar") { limpiarFiltros(); return; }
+  const tarjeta = e.target.closest(".tarjeta");
+  if (tarjeta) abrirModal(tarjeta.dataset.id);
+}
+
+function manejarClickModal(e) {
+  if (e.target === e.currentTarget) { cerrarModal(); return; }     // clic fuera de la caja
+  const el = e.target.closest("[data-accion]");
+  if (!el) return;
+  switch (el.dataset.accion) {
+    case "cerrar": cerrarModal(); break;
+    case "menos": cambiarCantidadModal(-1); break;
+    case "mas": cambiarCantidadModal(1); break;
+    case "agregar": if (agregarAlCarrito(productoModalId, cantidadModal)) cerrarModal(); break;
+    case "whatsapp": pedirProductoPorWhatsApp(productoModalId); break;
+  }
+}
+
+function manejarClickCarrito(e) {
+  const el = e.target.closest("[data-accion]");
+  if (!el) return;
+  const item = el.closest("[data-id]");
+  const id = item ? item.dataset.id : null;
+  switch (el.dataset.accion) {
+    case "cerrar":
+    case "seguir": cerrarCarrito(); break;
+    case "mas": if (id) cambiarCantidad(id, 1); break;
+    case "menos": if (id) cambiarCantidad(id, -1); break;
+    case "eliminar": if (id) eliminarProducto(id); break;
+    case "finalizar": finalizarCompra(); break;
+    case "vaciar": vaciarCarrito(); break;
+  }
+}
+
+// Conecta un elemento por id sin romperse si el elemento no existe.
+function escuchar(id, evento, funcion) {
+  const el = obtenerEl(id);
+  if (el) el.addEventListener(evento, funcion);
+  else console.warn("No se encontró #" + id + " en el HTML");
+}
+
+function iniciarEventos() {
+  escuchar("buscador", "input", function (e) { buscarProductos(e.target.value); });
+  escuchar("categorias", "click", function (e) {
+    const boton = e.target.closest("[data-categoria]");
+    if (boton) filtrarCategoria(boton.dataset.categoria);
+  });
+
+  ["contenedor-productos", "contenedor-destacados", "contenedor-promociones"].forEach(function (id) {
+    escuchar(id, "click", manejarClickProductos);
+  });
+
+  escuchar("btn-carrito", "click", verCarrito);
+  escuchar("barra-btn", "click", verCarrito);
+  escuchar("fondo", "click", cerrarCarrito);
+  escuchar("panel-carrito", "click", manejarClickCarrito);
+  escuchar("modal-producto", "click", manejarClickModal);
+
+  escuchar("btn-admin", "click", abrirAdmin);
+  escuchar("admin-modal", "click", function (e) {
+    if (e.target === e.currentTarget || e.target.closest("[data-accion='cerrar']")) cerrarAdmin();
+  });
+  escuchar("inv-llevadas", "input", actualizarCalculadoraInventario);
+  escuchar("inv-vendidas", "input", actualizarCalculadoraInventario);
+
+  // ESC cierra lo que esté abierto
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") cerrarCapaSuperior();
+  });
+
+  // Enlaces de WhatsApp: si falta el número, avisa en vez de abrir un enlace roto
+  document.addEventListener("click", function (e) {
+    const enlace = e.target.closest("[data-whatsapp]");
+    if (enlace && !numeroWhatsAppValido()) {
+      e.preventDefault();
+      mostrarNotificacion("Falta configurar el número de WhatsApp en script.js");
+    }
+  });
+}
+
+function iniciar() {
+  try {
+    limpiarProductos();
+    generarIds();
+    categoriasActivas = listaCategorias();
+    carrito = cargarCarrito();
+
+    mostrarCategorias();
+    mostrarDestacados();
+    mostrarPromociones();
+    mostrarProductos(undefined, true);
+    configurarEnlacesWhatsApp();
+    iniciarEventos();
+    actualizarCarrito();
+    asignarTexto("anio", new Date().getFullYear());
+  } catch (error) {
+    console.error("Error al iniciar el catálogo:", error);
+    const contenedor = obtenerEl("contenedor-productos");
+    if (contenedor) {
+      contenedor.innerHTML = '<div class="vacio"><strong>Ocurrió un problema al cargar el catálogo</strong>' +
+        "<p>Probá recargar la página.</p></div>";
+    }
+  }
+}
+
+document.addEventListener("DOMContentLoaded", iniciar);
