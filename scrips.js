@@ -57,7 +57,7 @@ document.addEventListener("error", function (e) {
    {
      nombre: "Nombre",
      precio: 1000,
-     imagen: "images/archivo.webp",
+     imagen: "Imagenes/archivo.webp",
      categoria: "limpieza",
      stock: true,            // true = hay | false = agotado | número (ej. 12) = unidades
      destacado: false,       // true = aparece en "Productos destacados"
@@ -70,38 +70,38 @@ document.addEventListener("error", function (e) {
    Los campos que no uses podés dejarlos afuera. El "id" se genera solo a partir del nombre.
    ===================================================== */
 const productos = [
-  { nombre: "Magistral Ultra", precio: 3000, imagen: "images/magistral-ultra.jpg", categoria: "limpieza", stock: true },
-  { nombre: "Magistral Repuesto 450 ml", precio: 2500, destacado: true, imagen: "images/magistral-repuesto-450ml.jpg", categoria: "limpieza", stock: true },
-  { nombre: "Colgate Triple Acción", precio: 3000, destacado: true, imagen: "images/colgate-triple-accion.jpg", categoria: "higiene", stock: true },
-  { nombre: "Colgate Original 180g", precio: 3000, imagen: "images/colgate-original-180g.jpg", categoria: "higiene", stock: true },
-  { nombre: "Dove Original", precio: 1500, imagen: "images/dove-original.jpg", categoria: "higiene", stock: true },
-  { nombre: "Axe Desodorante Apolo", precio: 4000, imagen: "images/axe-desodorante-apolo.jpg", categoria: "higiene", stock: true },
-  { nombre: "Axe Desodorante Black", precio: 4000, imagen: "images/axe-desodorante-black.jpg", categoria: "higiene", stock: true },
-  { nombre: "Babysec Toallitas 50", precio: 2000, imagen: "images/babysec-toallitas-50.jpg", categoria: "papeles", stock: true },
-  { nombre: "Fideos Molto Largos", precio: 850, destacado: true, promo: "3×$2500", imagen: "images/fideos-molto-largos.jpg", categoria: "almacen", stock: true },
-  { nombre: "Morenita Saquitos", precio: 4000, imagen: "images/Caffe-morenita-saquitos.jpg", categoria: "almacen", stock: true },
-  { nombre: "Rexona Odorono 60g", precio: 2000, imagen: "images/rexona-odorono-60gr.jpg", categoria: "higiene", stock: true },
-  { nombre: "Pitusas Black", precio: 1000, imagen: "images/ Pitusas-black.webp", categoria: "almacen", stock: true },
-  { nombre: "Alcohol Duplex", precio: 2000, imagen: "images/Alcohol-duplex.jpeg", categoria: "higiene", stock: true },
-  { nombre: "Arroz Molto Largo Fino", precio: 1300, imagen: "images/Arroz-molto-largo-fino.jpg", categoria: "almacen", stock: true },
-  { nombre: "Cif 500 ml", precio: 2500, imagen: "images/Cif-500-ml.jpeg", categoria: "limpieza", stock: true },
-  { nombre: "Dove Invisible Care", precio: 4000, imagen: "images/Dave-invicible-care.webp", categoria: "higiene", stock: true },
-  { nombre: "Esponjas Virulana", precio: 1000, imagen: "images/Espojas-virulana.jpg", categoria: "limpieza", stock: true },
-  { nombre: "Jabón en Polvo 800g", precio: 2800, imagen: "images/Jabon-en-polvo-800g.webp", categoria: "limpieza", stock: true },
-  { nombre: "Jabón Qué Linda", precio: 1500, imagen: "images/Jabon-que-linda.webp", categoria: "higiene", stock: true },
-  { nombre: "Mini Coronitas", precio: 1000, imagen: "images/Mini-coronitas-.webp", categoria: "almacen", stock: true },
-  { nombre: "Mini Pitusas Frutilla", precio: 1000, imagen: "images/Mini-pitusas-frutilla.webp", categoria: "almacen", stock: true },
-  { nombre: "Neosol Dulces Pack de 3", precio: 1500, imagen: "images/Neosol-dulces-pack-de-3.jpeg", categoria: "almacen", stock: true },
-  { nombre: "Nocturna Suave 16", precio: 4500, imagen: "images/Nocturna-suave-16.jpg", categoria: "higiene", stock: true },
-  { nombre: "Plusbelle Frescura", precio: 3500, imagen: "images/Plusbelle-frescura.jpg", categoria: "higiene", stock: true },
-  { nombre: "Rexona Antibac Dama", precio: 3000, imagen: "images/Reaxona-antibac-dama.webp", categoria: "higiene", stock: true },
-  { nombre: "Rexona Control Inteligente", precio: 3000, imagen: "images/Reaxona-control-inteligente.webp", categoria: "higiene", stock: true },
-  { nombre: "Surtido Bagley", precio: 2500, imagen: "images/Surtido-bagley.jpeg", categoria: "almacen", stock: true },
-  { nombre: "esponjas de acero", precio: 1000, imagen: "images/Virulana.webp", categoria: "limpieza", stock: true },
-  { nombre: "Yerba Canarias 1kg", precio: 12000, imagen: "images/Yerba-canarias-1kg.jpg", categoria: "almacen", stock: true },
-  { nombre: "Yerba Mañanita 500ml", precio: 1800, imagen: "images/Yerba-mañanita-500ml.jpg", categoria: "almacen", stock: true },
-  { nombre: "Esencial Limón", precio: 1000, imagen: "images/esencial-limon.png", categoria: "limpieza", stock: true },
-  { nombre: "Jabón de Tocador Plusbelle Frescura 90g", precio: 1000, imagen: "images/jabon-de-toc-plusbelle-frescura.jpg", categoria: "higiene", stock: true }
+  { nombre: "Magistral Ultra", precio: 3000, imagen: "Imagenes/magistral-ultra.jpg", categoria: "limpieza", stock: true },
+  { nombre: "Magistral Repuesto 450 ml", precio: 2500, destacado: true, imagen: "Imagenes/magistral-repuesto-450ml.jpg", categoria: "limpieza", stock: true },
+  { nombre: "Colgate Triple Acción", precio: 3000, destacado: true, imagen: "Imagenes/colgate-triple-accion.jpg", categoria: "higiene", stock: true },
+  { nombre: "Colgate Original 180g", precio: 3000, imagen: "Imagenes/colgate-original-180g.jpg", categoria: "higiene", stock: true },
+  { nombre: "Dove Original", precio: 1500, imagen: "Imagenes/dove-original.jpg", categoria: "higiene", stock: true },
+  { nombre: "Axe Desodorante Apolo", precio: 4000, imagen: "Imagenes/axe-desodorante-apolo.jpg", categoria: "higiene", stock: true },
+  { nombre: "Axe Desodorante Black", precio: 4000, imagen: "Imagenes/axe-desodorante-black.jpg", categoria: "higiene", stock: true },
+  { nombre: "Babysec Toallitas 50", precio: 2000, imagen: "Imagenes/babysec-toallitas-50.jpg", categoria: "papeles", stock: true },
+  { nombre: "Fideos Molto Largos", precio: 850, destacado: true, promo: "3×$2500", imagen: "Imagenes/fideos-molto-largos.jpg", categoria: "almacen", stock: true },
+  { nombre: "Morenita Saquitos", precio: 4000, imagen: "Imagenes/Caffe-morenita-saquitos.jpg", categoria: "almacen", stock: true },
+  { nombre: "Rexona Odorono 60g", precio: 2000, imagen: "Imagenes/rexona-odorono-60gr.jpg", categoria: "higiene", stock: true },
+  { nombre: "Pitusas Black", precio: 1000, imagen: "Imagenes/ Pitusas-black.webp", categoria: "almacen", stock: true },
+  { nombre: "Alcohol Duplex", precio: 2000, imagen: "Imagenes/Alcohol-duplex.jpeg", categoria: "higiene", stock: true },
+  { nombre: "Arroz Molto Largo Fino", precio: 1300, imagen: "Imagenes/Arroz-molto-largo-fino.jpg", categoria: "almacen", stock: true },
+  { nombre: "Cif 500 ml", precio: 2500, imagen: "Imagenes/Cif-500-ml.jpeg", categoria: "limpieza", stock: true },
+  { nombre: "Dove Invisible Care", precio: 4000, imagen: "Imagenes/Dave-invicible-care.webp", categoria: "higiene", stock: true },
+  { nombre: "Esponjas Virulana", precio: 1000, imagen: "Imagenes/Espojas-virulana.jpg", categoria: "limpieza", stock: true },
+  { nombre: "Jabón en Polvo 800g", precio: 2800, imagen: "Imagenes/Jabon-en-polvo-800g.webp", categoria: "limpieza", stock: true },
+  { nombre: "Jabón Qué Linda", precio: 1500, imagen: "Imagenes/Jabon-que-linda.webp", categoria: "higiene", stock: true },
+  { nombre: "Mini Coronitas", precio: 1000, imagen: "Imagenes/Mini-coronitas-.webp", categoria: "almacen", stock: true },
+  { nombre: "Mini Pitusas Frutilla", precio: 1000, imagen: "Imagenes/Mini-pitusas-frutilla.webp", categoria: "almacen", stock: true },
+  { nombre: "Neosol Dulces Pack de 3", precio: 1500, imagen: "Imagenes/Neosol-dulces-pack-de-3.jpeg", categoria: "almacen", stock: true },
+  { nombre: "Nocturna Suave 16", precio: 4500, imagen: "Imagenes/Nocturna-suave-16.jpg", categoria: "higiene", stock: true },
+  { nombre: "Plusbelle Frescura", precio: 3500, imagen: "Imagenes/Plusbelle-frescura.jpg", categoria: "higiene", stock: true },
+  { nombre: "Rexona Antibac Dama", precio: 3000, imagen: "Imagenes/Reaxona-antibac-dama.webp", categoria: "higiene", stock: true },
+  { nombre: "Rexona Control Inteligente", precio: 3000, imagen: "Imagenes/Reaxona-control-inteligente.webp", categoria: "higiene", stock: true },
+  { nombre: "Surtido Bagley", precio: 2500, imagen: "Imagenes/Surtido-bagley.jpeg", categoria: "almacen", stock: true },
+  { nombre: "esponjas de acero", precio: 1000, imagen: "Imagenes/Virulana.webp", categoria: "limpieza", stock: true },
+  { nombre: "Yerba Canarias 1kg", precio: 12000, imagen: "Imagenes/Yerba-canarias-1kg.jpg", categoria: "almacen", stock: true },
+  { nombre: "Yerba Mañanita 500ml", precio: 1800, imagen: "Imagenes/Yerba-mañanita-500ml.jpg", categoria: "almacen", stock: true },
+  { nombre: "Esencial Limón", precio: 1000, imagen: "Imagenes/esencial-limon.png", categoria: "limpieza", stock: true },
+  { nombre: "Jabón de Tocador Plusbelle Frescura 90g", precio: 1000, imagen: "Imagenes/jabon-de-toc-plusbelle-frescura.jpg", categoria: "higiene", stock: true }
 ];
 
 
@@ -385,6 +385,7 @@ function limpiarFiltros() {
   if (buscador) buscador.value = "";
   filtrarCategoria("todos");
 }
+
 
 /* =====================================================
    6. CATEGORÍAS
